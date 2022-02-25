@@ -13,6 +13,7 @@ import {
   ObjectStoreMeta,
   RequestEvent,
   WithID,
+  ObjectStoreSchema
 } from './ngx-indexed-db.meta';
 
 @Injectable()
@@ -725,6 +726,61 @@ export class NgxIndexedDBService {
           };
         })
         .catch((reason) => obs.error(reason));
+    });
+  }
+
+  /**
+  * Returns if store exist or not.
+  * @param storeName The name of the store to check
+  */
+  isStoreExist(storeName: string): Observable<boolean> {
+    return new Observable<boolean>((obs) => {
+      openDatabase(this.indexedDB, this.dbConfig.name, this.dbConfig.version)
+        .then((db: IDBDatabase) => {
+          try {
+            const transaction = createTransaction(db, optionsGenerator(DBMode.readonly, storeName, obs.error));
+            transaction.objectStore(storeName);
+            obs.next(true);
+            obs.complete();
+          }
+          catch (e) {
+            obs.next(false);
+            obs.complete();
+          }
+
+        })
+        .catch((error) => {
+          obs.next(false);
+          obs.complete();
+        });
+    });
+  }
+
+  /**
+  * Create store if not already
+  * @param storeName The name of the store to create
+  */
+  addStoreIfNotAlready(storeSchema: ObjectStoreMeta): Observable<boolean> {
+    return new Observable<boolean>((obs) => {
+      openDatabase(this.indexedDB, this.dbConfig.name, this.dbConfig.version)
+        .then((db: IDBDatabase) => {
+          try {
+            const transaction = createTransaction(db, optionsGenerator(DBMode.readonly, storeSchema.store, obs.error));
+            transaction.objectStore(storeSchema.store);
+          }
+          catch (e) {
+            const objectStore = db.createObjectStore(storeSchema.store, storeSchema.storeConfig);
+            storeSchema.storeSchema.forEach((schema: ObjectStoreSchema) => {
+              objectStore.createIndex(schema.name, schema.keypath, schema.options);
+            });
+          }
+          obs.next(true);
+          obs.complete();
+        })
+        .catch((error) => {
+          obs.next(false);
+          obs.complete();
+        });
     });
   }
 
