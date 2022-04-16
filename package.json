@@ -16,7 +16,9 @@
     "lint": "ng lint",
     "e2e": "ng e2e",
     "format": "prettier \"projects/**/*.{ts,json}\" --write",
-    "serve:ssr:ssr-playground": "node dist/ssr-playground/server/server.mjs"
+    "serve:ssr:ssr-playground": "node dist/ssr-playground/server/server.mjs",
+    "prepublish": "npm run build:lib",
+    "publish": "npm publish --access=public"
   },
   "lint-staged": {
     "*.{ts,js}": [

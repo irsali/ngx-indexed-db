@@ -398,16 +398,11 @@ export class NgxIndexedDBService {
   /**
    * Adds or updates a record in store with the given value and key. Return all items present in the store
    * @param storeName The name of the store to update
-   * @param items The values to update in the DB
-   *
-   * @Return The return value is an Observable with the primary key of the object that was last in given array
-   *
-   * @error If the call to bulkPut fails the transaction will be aborted and previously inserted entities will be deleted
+   * @param value The new value for the entry
+   * @param key The key of the entry to update
    */
-  @CloseDbConnection()
-  public bulkPut<T>(storeName: string, items: Array<T>): Observable<Key> {
-    let transaction: IDBTransaction;
-    return new Observable((obs) => {
+  updateByKey<T>(storeName: string, value: T, key?: IDBValidKey): Observable<T> {
+    return new Observable<T>((obs) => {
       openDatabase(this.indexedDB, this.dbConfig.name, this.dbConfig.version)
         .then((db) => {
           validateBeforeTransaction(db, storeName, (e) => obs.error(e));
@@ -440,6 +435,52 @@ export class NgxIndexedDBService {
         });
     });
   }
+
+   /**
+   * Adds or updates a record in store with the given value and key. Return all items present in the store
+   * @param storeName The name of the store to update
+   * @param items The values to update in the DB
+   *
+   * @Return The return value is an Observable with the primary key of the object that was last in given array
+   *
+   * @error If the call to bulkPut fails the transaction will be aborted and previously inserted entities will be deleted
+   */
+   @CloseDbConnection()
+   public bulkPut<T>(storeName: string, items: Array<T>): Observable<Key> {
+     let transaction: IDBTransaction;
+     return new Observable((obs) => {
+       openDatabase(this.indexedDB, this.dbConfig.name, this.dbConfig.version)
+         .then((db) => {
+           validateBeforeTransaction(db, storeName, (e) => obs.error(e));
+           transaction = createTransaction(
+             db,
+             optionsGenerator(DBMode.readwrite, storeName, (e) => obs.error(e))
+           );
+           const objectStore = transaction.objectStore(storeName);
+
+           items.forEach((item, index: number) => {
+             const request: IDBRequest<IDBValidKey> = objectStore.put(item);
+
+             if (index === items.length - 1) {
+               request.onsuccess = (evt: Event) => {
+                 transaction.commit();
+                 obs.next((evt.target as IDBRequest<Key>).result);
+                 obs.complete();
+               };
+             }
+
+             request.onerror = (evt: Event) => {
+               transaction.abort();
+               obs.error(evt);
+             };
+           });
+         })
+         .catch((reason) => {
+           transaction?.abort();
+           obs.error(reason);
+         });
+     });
+   }
 
   /**
    * Returns all items from the store after delete.
