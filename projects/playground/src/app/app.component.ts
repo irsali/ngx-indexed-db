@@ -145,7 +145,7 @@ export class AppComponent {
   checkStore(storeName: string) {
     console.log('storeName', storeName);
     this.dbService.isStoreExist(storeName).subscribe(x => {
-      console.log('Store created', x);
+      console.log('Store exist', x);
     });
   }
 

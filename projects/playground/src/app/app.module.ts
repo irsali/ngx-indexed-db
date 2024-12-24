@@ -7,7 +7,7 @@ import { FormsModule } from '@angular/forms';
 
 const dbConfig: DBConfig = {
   name: 'MyDb',
-  version: 1,
+  // version: 1,
   objectStoresMeta: [
     {
       store: 'people',
