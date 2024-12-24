@@ -13,7 +13,6 @@ import {
   ObjectStoreMeta,
   RequestEvent,
   WithID,
-  ObjectStoreSchema
 } from './ngx-indexed-db.meta';
 
 @Injectable()
