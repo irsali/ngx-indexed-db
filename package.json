@@ -1,5 +1,5 @@
 {
-  "name": "ngx-indexed-db",
+  "name": "@irshadali/ngx-indexed-db",
   "version": "19.3.0",
   "files": [
     "dist/ngx-indexed-db/**/*"
